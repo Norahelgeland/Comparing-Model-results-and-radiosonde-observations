@@ -112,42 +112,10 @@ def time_interpolate_points(ds, time1):
     return t,t1,t2 
 
 
-def dataSeriesLev(s,t,ix1,ix2,iy1,iy2,dataset, variable, time_step):
-
-    """
-    Innput:
-    Billinnear interpolation weights s and t. Then four grid points and a dataset containing the variable
-
-    Output:
-    List with variable in each hybrid layer
-    """
-    start_time = time.time()
-    variable_inter = dataset[variable]
-    variable_inter = variable_inter.isel(time=time_step)
-    #latitude[18, 60,].values
-    #Move up all levels in one timestep
-    #v = np.zeros(len(variable_inter))    
-    #Get four corners to interpolate as lists
-    ll = variable_inter.isel(y=iy1, x=ix1).values
-    ul = variable_inter.isel(y=iy2, x=ix1).values
-    lr = variable_inter.isel(y=iy1, x=ix2).values
-    ur = variable_inter.isel(y=iy2, x=ix2).values
-
-    #Interpolate along latitude
-    v1 = (1-s)*ll + s*ul
-    v2 = (1-s)*lr + s*ur
-
-    #Interpolate along longitude
-    yx = (1-t)*v1 + t*v2
-    #print(yx)        
-    #v = yx.reshape(yx.shape[0])
-    end_time = time.time()
-    print("Run time = {}".format(end_time-start_time))
-    #gc.collect()
-    
-    return yx
 
 def Bilinnear_interpolate(s, t, h1, h2, h3, h4):
+
+
 
     v1 = (1-s)*h1 + s*h2
     v2 = (1-s)*h3 + s*h4
@@ -433,7 +401,7 @@ if __name__=="__main__":
     v = BilinnerarPoints(ds, Radiosonde1.lat, Radiosonde1.lon)
 
     """
-    Uncomment the lines below to find the interpolated wind direction
+    UFind the interpolated wind direction
     ----------------------------------------------------------------------------------------------------------
     """
 
@@ -457,7 +425,7 @@ if __name__=="__main__":
     wdir_data.to_netcdf(f"/home/norah/master/data/no_hdisp_wdir_int/int_sonde_data00_26/{file_list1}_wdir_model.nc")
 
     """
-    Uncomment the four lines below to find the interpolated wind speed
+    Find the interpolated wind speed
     ----------------------------------------------------------------------------------------------------------
     """
 
