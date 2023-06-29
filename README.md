@@ -16,6 +16,6 @@ Interpolation_4d_height.py is used to interpolate the model in height, xy and ti
 
 In **Statistical_analysis.py**:
 
--polar plots showing wind direction
+- polar plots showing wind direction
 - violinplots showing mean abolute errror and mean error 
 - Scatterplots
