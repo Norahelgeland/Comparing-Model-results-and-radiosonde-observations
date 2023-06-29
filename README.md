@@ -1,4 +1,4 @@
-# Comparing Model Results and Radiosonde-Observations
+# Comparing Model Results and Radiosonde Observations
 
 ## extract bufr file and place in separate csv files
 
