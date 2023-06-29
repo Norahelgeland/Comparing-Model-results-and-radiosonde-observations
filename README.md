@@ -10,6 +10,6 @@ bufr_extract.ipynb is used to place the data from the bufr files(at each timeste
 
 ## Interpolation in 4d to compare model with atmospheric soundings retrieved from the Wyoming University webpage
 
-Interpolation_4d_height.py is used to interpolate the model in height, xy and time to have the same position in space and time 
+Interpolation_4d_height.py is used to interpolate the model in height, xy and time to have the same position in space and time. Since the model data does not contain height, geopotential height in each hybrid level is calculated in **geopot_levs.py** by using the pressure in each full layer, and then the hypsometric equation can be used. By using the job_submit.sh and pasting the path to the geopot_levs.py  file the geopotential height will be calculated for the whole model grid in each height for six hours in each timestep. This has to be done before running the Interpolation_4d_heightThis file is run in the same way as explained for the interpolation_exner.py file.
 
 ## Statistical analysis
