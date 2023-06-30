@@ -16,6 +16,8 @@ bufr_extract.ipynb is used to place the data from the bufr files(at each timeste
 
 Interpolation_4d_height.py is used to interpolate the model in height, xy and time to have the same position in space and time. Since the model data does not contain height, geopotential height in each hybrid level is calculated in **make_geopot_levs.py**. By using the **job_submit.sh** and pasting the path to the **make_geopot_levs.py**  file the geopotential height will be calculated for the whole model grid in each height for six hours in each timestep. This has to be done before running the **Interpolation_4d_heightTh**is file is run in the same way as explained for the interpolation_exner.py file. The radiosnde class for this interpolation is in **radiosonde_class.py** and need to be imported correctly.
 
+Some of the code is commented and could be uncommented to send many jobs over many dates to the supercomputer at the same time. The corresponding code lines then need to be commented.
+
 ## Statistical analysis
 
 In **Statistical_analysis.py**:
