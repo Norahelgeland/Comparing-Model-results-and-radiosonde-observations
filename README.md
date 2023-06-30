@@ -1,5 +1,7 @@
 # Comparing Model Results and Radiosonde Observations
 
+Right now the program is adapted to the AROME model and finding wind direction and wind speed. To find other variables. the input to the interpolation function need to be changed in the main for both of the interpolation files. Aditionally some of the calculations finding the wind speed and wind direction in the main can be commented for more simple variables like temperature. However, in the **interpolation_4d_height.py** file also the ground parameter need to be changed in the height_interpolate_point() function.
+
 ## extract bufr file and place in separate csv files
 
 bufr_extract.ipynb is used to place the data from the bufr files(at each timestep) in csv files corresponding to each radiosonde sounding. The date has to be changed to retrieve the correct bufr file. Also the desired area has to be defined.
