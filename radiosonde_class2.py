@@ -32,12 +32,20 @@ class Radiosonde_csv:
     # Instance attribute
     def __init__(self, filename, time):
         
+        """
+        Innput
+        ------------------------------------------------------------------------
+        filename is the name of the dataset containing information of a radiosonde
+        (has to be a .csv file). 
 
+        time: datetime64
+        ------------------------------------------------------------------------
+
+        """
 
         self.data = pd.read_csv(filename)
 
-        #Drop all nan heights
-        #self.data = self.data[self.data['height'].notna()]
+   
         self.data["height"] = self.data["height"].interpolate()
       
         self.data = self.data[self.data['height'].notna()]

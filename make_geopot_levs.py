@@ -35,7 +35,16 @@ from tqdm import tqdm
 def hybrid_levs_to_height(ds, time):
 
     """
+    Input
+    --------------------------------------------------------------------------------------------------------------------------------
+    ds: xarray dataset
+    time: int
+
     This function uses hybrid coordinates to find the pressure half levels, and from there the geopotential height in each half layer.
+
+    Output
+    ---------------------------------------------------------------------------------------------------------------------------------
+    Model geopotential height xarray dataset
     """
 
     ds = ds.isel(time=time)

@@ -35,6 +35,18 @@ gc.collect()
 
 def BilinnerarPoints(ds, lat, lon):
 
+    """
+    Innput
+    -------------------------------------------------------------------------------------------------
+    ds: xarray dataframe containing the lonitude and lkatitude and corresponding xy values 
+    lat: target latitude(int)
+    lon: target longitude (int)
+
+    Output
+    -------------------------------------------------------------------------------------------------
+    The nearest grid points and the weight to preform bilinnear interpolation in the xy plane.
+    """
+
 
     ds_lat = ds['latitude'].values
     ds_lon = ds['longitude'].values
@@ -79,6 +91,17 @@ def BilinnerarPoints(ds, lat, lon):
 
 def Nearest_xy_point(ds, lat, lon):
 
+    """
+    Innput
+    -------------------------------------------------------------------------------------------------
+    ds: xarray dataframe containing the lonitude and lkatitude and corresponding xy values 
+    lat: target latitude(int)
+    lon: target longitude (int)
+
+    Output
+    -------------------------------------------------------------------------------------------------
+    The nearest grid point
+    """
 
     ds_lat = ds['latitude'].values
     ds_lon = ds['longitude'].values
@@ -98,13 +121,18 @@ def Nearest_xy_point(ds, lat, lon):
 def time_interpolate_points(ds, time1):
     
     """
-    Innput:
-    File or array?
+    Innput
+    --------------------------------------------------------------------------------------
+    ds: xarray dataframe
+    time1: target time. need to be in datetime64 format
     
-    Ourtput:
+    Ourtput
+    --------------------------------------------------------------------------------------
     A linnear interpolation weight t, and the two corresponding time points
-    
+
     """
+
+
     timepoints = ds["time"].values
 
     k = min(timepoints, key=lambda x: abs(x - time1))
@@ -130,6 +158,17 @@ def time_interpolate_points(ds, time1):
 
 def Bilinnear_interpolate(s, t, h1, h2, h3, h4):
 
+    """
+    Innput
+    --------------------------------------------------------------------------------------
+    interpolation weights and the four nearest xy points
+    
+    Ourtput
+    --------------------------------------------------------------------------------------
+    the interpolated variable
+
+    """
+
     v1 = (1-s)*h1 + s*h2
     v2 = (1-s)*h3 + s*h4
 
@@ -140,6 +179,20 @@ def Bilinnear_interpolate(s, t, h1, h2, h3, h4):
 
 def exner_levs(ds, time1, ix, iy):
     
+    """
+    Innput
+    ------------------------------------------------------------------------------------------
+    ds: xarray datset/array
+    ix: position in x direction (int)
+    iy: position in y direction (int)
+    time1: index for position in time (int)
+    
+    Ourtput
+    ------------------------------------------------------------------------------------------
+    list containing model exner levels
+    
+    """
+
    
     ds = ds.isel(time=time1)
     ds = ds.isel(y=iy, x=ix)
@@ -158,7 +211,23 @@ def exner_levs(ds, time1, ix, iy):
 
 
 def interpolate_exner(ds, exn_lev, exner, variable, time1, ix, iy):
-
+    
+    """
+    Innput
+    ------------------------------------------------------------------------------------------
+    ds: xarray datset/array
+    variable: the variable that is being interpolated (string)
+    exn_lev: vertical position of sonde observation (int)
+    exner: list of model exner levels
+    ix: position in x direction (int)
+    iy: position in y direction (int)
+    time1: index for position in time (int)
+    
+    Ourtput
+    ------------------------------------------------------------------------------------------
+    A linnear interpolation weight h, and the two nearest height levels
+    
+    """
 
     ds = ds.isel(time=time1)
 
@@ -201,11 +270,18 @@ def interpolate_exner(ds, exn_lev, exner, variable, time1, ix, iy):
 def interpolate_4dims(ds, sonde_object, variable):
 
     """
-    Interpolation in time
+    Innput
+    -----------------------------------------------------------------------------
+    ds: xarray datset/array
+    sonde_oject: containing the sounding data (pandas dataframe)
+    variable: the variable that is being interpolated (string)
 
-    output:
-    The interpolated variables
+    output
+    -------------------------------------------------------------------------------
+    The interpolated variables in a list
+
     """
+
 
     new_var = []
   
@@ -214,10 +290,11 @@ def interpolate_4dims(ds, sonde_object, variable):
 
 
     data = ds.isel(time=0, y=iy, x=ix)
+    #Model exner levels
     exner = exner_levs(ds, 0, ix, iy).values
 
     exner=exner.squeeze()
- 
+    #sonde_exner levels
     sonde_object.make_exner_levs(data["surface_air_pressure"].values.squeeze())
 
     sonde_exner=sonde_object.data.loc[sonde_object.data["exner"]<exner[-1]]

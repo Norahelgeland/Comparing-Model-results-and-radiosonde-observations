@@ -37,6 +37,18 @@ gc.collect()
 
 def BilinnerarPoints(ds, lat, lon):
 
+    """
+    Innput
+    -------------------------------------------------------------------------------------------------
+    ds: xarray dataframe containing the lonitude and lkatitude and corresponding xy values 
+    lat: target latitude(int)
+    lon: target longitude (int)
+
+    Output
+    -------------------------------------------------------------------------------------------------
+    The nearest grid points and the weight to preform bilinnear interpolation in the xy plane.
+    """
+
 
     ds_lat = ds['latitude'].values
     ds_lon = ds['longitude'].values
@@ -66,7 +78,7 @@ def BilinnerarPoints(ds, lat, lon):
         #Bilinear interpolation coefficients s and t
     s = 1
 
-
+    #Bilinear interpolation coefficients s and t
     if ((ds_lat[iy2,ix1] - ds_lat[iy1,ix1]) > 0):
         s = (lat - ds_lat[iy1,ix]) / (ds_lat[iy2,ix] - ds_lat[iy1,ix])
 
@@ -82,13 +94,18 @@ def BilinnerarPoints(ds, lat, lon):
 def time_interpolate_points(ds, time1):
     
     """
-    Innput:
-    File or array?
+    Innput
+    --------------------------------------------------------------------------------------
+    ds: xarray dataframe
+    time1: target time. need to be in datetime64 format
     
-    Ourtput:
+    Ourtput
+    --------------------------------------------------------------------------------------
     A linnear interpolation weight t, and the two corresponding time points
-    
+
     """
+
+
     timepoints = ds["time"].values
 
     k = min(timepoints, key=lambda x: abs(x - time1))
@@ -115,6 +132,16 @@ def time_interpolate_points(ds, time1):
 
 def Bilinnear_interpolate(s, t, h1, h2, h3, h4):
 
+    """
+    Innput
+    --------------------------------------------------------------------------------------
+    interpolation weights and the four nearest xy points
+    
+    Ourtput
+    --------------------------------------------------------------------------------------
+    the interpolated variable
+
+    """
 
 
     v1 = (1-s)*h1 + s*h2
@@ -126,75 +153,25 @@ def Bilinnear_interpolate(s, t, h1, h2, h3, h4):
     return new
 
 
-def hybrid_levs_to_height(ds, time):
-
-    """
-    Height levels could be found here if many assumptions and simplifications are made. 
-    """
-    ds = ds.isel(time=time)
-
-    #To find the presssure in the halflayer we need ap and bp which are constants representing the full layers
-    ap = ds["ap"].values
-    bp = ds["b"].values
-
-    # Lets move up the half layers to find ap1/2 and bp1/2
-    ap_half = np.zeros(len(ap)+1) # Is zero at ground level
-    bp_half = np.zeros(len(ap)+1)
-
-    ap_half[0] = 0 
-    bp_half [0] = 0 
-
-    ap_half[-1] = 0 # Is zero at ground level
-    bp_half[-1] = 1 # Is 1 at ground level so that the pressure is equal to the surface pressure
-
-    p_surface = ds["surface_air_pressure"]#Also needs to be interpolated
-
-    for k in range(len(ap), 0,-1):
-
-        #print(ap_half[k])
-        ap_half[k-1] = ap[k-1]*2-ap_half[k]
-        bp_half[k-1] = bp[k-1]*2-bp_half[k]  
-    
-    #Prøve senere? 
-
-    ap_half = xarray.DataArray(ap_half, dims=["kh"])
-    b_half = xarray.DataArray(bp_half, dims=["kh"])
-
-    p_half = ap_half + b_half * p_surface
- 
-    #We need the virtual temperature to solve the hypsometric equation
-    T = ds["air_temperature_ml"]
-    qv = ds["specific_humidity_ml"]
-
-    T_v = (1+0.61*qv)*T
-
-    #The hypsometric equation
-    geopot_levs = np.zeros_like(T)
-   
-    g=9.81
-    height=np.zeros_like(T.isel(hybrid=0))
-    R=287 #J/(K*kg)
-     
-    for k in range(len(ap_half)-2,1, -1):
-
-        delta_z = R*T_v.isel(hybrid = k-1)/g*np.log(p_half.isel(kh = k-1)/p_half.isel(kh=k))
-        #breakpoint()
-        height-=delta_z.squeeze()
-        geopot_levs[k,:,:] = height
-        
-    #breakpoint()
-    geopot_levs = xarray.DataArray(geopot_levs, dims=["hybrid","y","x"], coords=[ds["hybrid"], ds["y"], ds["x"]])
-
-    return geopot_levs
 
 
 def height_interpolate_points(ds, geopot_levs, variable, variable_ground, height,x, y, time1):
-    """
-    Innput:
-    xarray datset/array
     
-    Ourtput:
-    A linnear interpolation weight t, and the two corresponding time points
+    """
+    Innput
+    ------------------------------------------------------------------------------------------
+    ds: xarray datset/array
+    geopot_levs: geopotential height. xarray dataset
+    variable: the variable that is being interpolated (string)
+    variabl ground: (string)
+    height: vertical position of sonde observation (int)
+    x: position in x direction (int)
+    y: position in y direction (int)
+    time1: index for position in time (int)
+    
+    Ourtput
+    ------------------------------------------------------------------------------------------
+    A linnear interpolation weight h, and the two nearest height levels
     
     """
  
@@ -258,11 +235,22 @@ def height_interpolate_points(ds, geopot_levs, variable, variable_ground, height
 def interpolate_4dims(ds, sonde_object, variable, variable_ground, geopot_levs):
 
     """
-    Here the interpolation takes place
+    Innput
+    -----------------------------------------------------------------------------
+    ds: xarray datset/array
+    sonde_oject: containing the sounding data (pandas dataframe)
+    geopot_levs: geopotential height. xarray dataset
+    variable: the variable that is being interpolated (string)
+    variabl ground: (string)
+    height: vertical position of sonde observation (int)
 
-    output:
-    The interpolated variables
+    output
+    -------------------------------------------------------------------------------
+    The interpolated variables in a list
+
     """
+
+
     max_height=np.where(sonde_object.data["height(m)"]<7000)
     
     

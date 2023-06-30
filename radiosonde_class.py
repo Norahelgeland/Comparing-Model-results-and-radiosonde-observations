@@ -21,6 +21,18 @@ class Radiosonde:
     
     # Instance attribute
     def __init__(self, filename, lat, lon, time):
+
+        """
+        Innput
+        ------------------------------------------------------------------------
+        filename is the name of the dataset containing information of a radiosonde
+        (has to be a .txt file). 
+        lat and long is the initial longitiude. 
+        and latitude of the radiosonde.
+        time: datetime64
+        ------------------------------------------------------------------------
+
+        """
         
         self.data =  pd.read_fwf(filename,header = None, skiprows = [0], names=["hPa", "height(m)", "Temp(C)", "DWPT", "Relh", "MIXR", "DRCT(deg)","WSPD(knot)", "8", "9", "10"])
 
@@ -33,25 +45,9 @@ class Radiosonde:
         self.data["WSPD(knot)"] = self.data["WSPD(knot)"][:]*0.514444444
 
     def find_horizontal_disp(self):
-        #filename2
-        """
-        Innput
-        ------------------------------------------------------------------------
-        filename is the name of the dataset containing information of a radiosonde
-        (has to be a .txt file). 
-        lat and long is the initial longitiude. 
-        and latitude of the radiosonde.
-        ------------------------------------------------------------------------
-        Output
-        ------------------------------------------------------------------------
-        A new dataframe with the latitudes and longitudes corresponding to the time and vertical 
-        displacment
-        """
-    
-        #converting knots into meters per second
-    
-      
 
+
+        #converting knots into meters per second
         self.data["DRCT(deg)"] = self.data["DRCT(deg)"].fillna(method='bfill')
         self.data["DRCT(deg)"] = self.data["DRCT(deg)"].fillna(method='ffill')
     
@@ -100,9 +96,8 @@ class Radiosonde:
         
             dx = new_x-old_x
             dy = new_y-old_y
-            #self.distance.append(math.sqrt(dx**2+dy**2))
+  
             #change in latitude is the change in x along the north south line
-        
             lat = lat - dx/(earth_radius*1000)*radians_to_degrees
             new_lat.append(lat)
         
@@ -135,30 +130,12 @@ class Radiosonde:
 
             self.data=self.data.drop(self.data.index[0])
 
-       
     
-    #Find distance, error etc..., max distance
-    #Cut off after 5000 meters
-        #return df, distances
 
     def find_data_no_horizontal_disp(self):
-        #filename2
-        """
-        Innput
-        ------------------------------------------------------------------------
-        filename2 is the name of the dataset containing information of a radiosonde
-        (has to be a .txt file). 
-        lat and long is the initial longitiude. 
-        and latitude of the radiosonde.
-        ------------------------------------------------------------------------
-        Output
-        ------------------------------------------------------------------------
-        A new dataframe with the latitudes and longitudes corresponding to the time and vertical 
-        displacment
-        """
+
     
         #converting knots into meters per second
-    
         self.data["DRCT(deg)"] = self.data["DRCT(deg)"].fillna(method='bfill')
         self.data["DRCT(deg)"] = self.data["DRCT(deg)"].fillna(method='ffill')
     
@@ -169,7 +146,6 @@ class Radiosonde:
         self.data["WSPD(knot)"] = self.data["WSPD(knot)"].fillna(method='ffill')
 
         #finding the wind speed in x and y direction
-        #self.data = self.data.replace(360.0, 0) #There is some issue converting 360 deg to radians, therefore replacing 360 with 0
     
         x_wind = []
         y_wind = []
