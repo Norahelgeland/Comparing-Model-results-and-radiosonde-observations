@@ -1,8 +1,6 @@
 # Comparing Model Results and Radiosonde Observations(for spatially dependent comparison)
 
-Right now the program is adapted to the AROME model and interpolating wind direction and wind speed to be spatially comparable to radiosonde observations. To find other variables. the input to the interpolation function need to be changed in the main for both of the interpolation files. Aditionally some of the calculations finding the wind speed and wind direction in the main can be commented for more simple variables like temperature. However, in the **interpolation_4d_height.py** file also the ground parameter need to be changed in the height_interpolate_point() function. To use the project on other models, the variable names need to be changed to match the momodel configuratio. Also alpha need to be changed to fit the configuration if the model if wind direction is found.
-
-Currently adding interpolation for ERA5
+Interpolating wind direction and wind speed to be spatially comparable to radiosonde observations. To find other variables. the input to the interpolation function need to be changed in the main for both of the interpolation files. Aditionally some of the calculations, finding the wind speed and wind direction in the main can be commented for more simple variables like temperature. However, in the **interpolation_4d_height.py** file also the ground parameter need to be changed in the height_interpolate_point() function. To use the project on other models, the variable names need to be changed to match the momodel configuratio. Also alpha need to be changed to fit the configuration if the model if wind direction is found.
 
 ## Requirements
 
@@ -15,7 +13,9 @@ bufr_extract.ipynb is used to place the data from the bufr files(at each timeste
 
 ## Interpolation to compare model with radiosonde observations from bufr file
 
-**Interpolate_exner.py** is used to interpolate the model data in exner coordinates and time to have the same position vertically and temporally as the atmospheric soundings retrieved from the bufr files. Only the dates in the main function needs to be changed between runs. The filenames also need to be changed. The corresponding folders need to be created in the correct location before running. The jobs are submitted to the supercomputer through the **job_submit.sh** file. To run it on your own computer some modifications need to be made. **radiosonde_class2.py** is used to make radiosonde objects by retriving the already produced csv files and producing a cleaned pandas dataset and need to be in the correct folder to be imported. A class function is called for in the main to create exner levels corresponding to the specific atmospheric sounding
+**Interpolate_exner_arome.py** is used to interpolate the model data in exner coordinates and time to have the same position vertically and temporally as the atmospheric soundings retrieved from the bufr files. Only the dates in the main function needs to be changed between runs. The filenames also need to be changed. The corresponding folders need to be created in the correct location before running. The jobs are submitted to the supercomputer through the **job_submit.sh** file. To run it on your own computer some modifications need to be made. **radiosonde_class2.py** is used to make radiosonde objects by retriving the already produced csv files and producing a cleaned pandas dataset and need to be in the correct folder to be imported. A class function is called for in the main to create exner levels corresponding to the specific atmospheric sounding
+
+**Interpolate_exner_era5.py** does the same as **Interpolate_exner_arome.py** but is adapted to era5.
 
 ##  retrieve atmospheric sounding data from the wyoming university web page
 
