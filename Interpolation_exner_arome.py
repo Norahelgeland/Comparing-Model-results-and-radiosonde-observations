@@ -38,7 +38,7 @@ def BilinnerarPoints(ds, lat, lon):
     """
     Innput
     -------------------------------------------------------------------------------------------------
-    ds: xarray dataframe containing the lonitude and latitude and corresponding xy values 
+    ds: xarray dataframe containing the lonitude and lkatitude and corresponding xy values 
     lat: target latitude(int)
     lon: target longitude (int)
 
@@ -52,27 +52,24 @@ def BilinnerarPoints(ds, lat, lon):
     ds_lon = ds['longitude'].values
         
     #find distance between all the latitudes and longitudes in the dataset and the observation latitude
-    X1=np.sqrt(np.square(ds_lat-lat))
-    X2=np.sqrt(np.square(ds_lon-lon))
-    
-    idx1=np.where(X1 == X1.min())
-    idx2=np.where(X2 == X2.min())
+    X=np.sqrt(np.square(ds_lat-lat) + np.square(ds_lon-lon))
+    idx=np.where(X == X.min())
 
-    ix=idx2[0] # longitude with smallest distance
-    iy=idx1[0] # latitude with smallest distance
+    ix=idx[1] # longitude with smallest distance
+    iy=idx[0] # latitude with smallest distance
     #print('ix',ix)
     #print('iy',iy)
         
     #Find nearest neighbors y,x for the latitude 
     iy1=iy
     iy2=iy+1
-    if ((ds_lat[iy]-lat) > 0):
+    if ((ds_lat[iy,ix]-lat) > 0):
         iy2=iy
         iy1=iy-1
     #
     ix1=ix
     ix2=ix+1
-    if ((ds_lon[ix]-lon) > 0):
+    if ((ds_lon[iy,ix]-lon) > 0):
         ix2=ix
         ix1=ix-1
 
@@ -80,15 +77,15 @@ def BilinnerarPoints(ds, lat, lon):
     s = 1
 
 
-    if ((ds_lat[iy2] - ds_lat[iy1]) > 0):
-        s = (lat - ds_lat[iy1]) / (ds_lat[iy2] - ds_lat[iy1])
+    if ((ds_lat[iy2,ix1] - ds_lat[iy1,ix1]) > 0):
+        s = (lat - ds_lat[iy1,ix]) / (ds_lat[iy2,ix] - ds_lat[iy1,ix])
 
         
     t = 1
-    if ((ds_lon[ix2] - ds_lon[ix1]) > 0):
-        t = (lon - ds_lon[ix1]) / (ds_lon[ix2] - ds_lon[ix1])
+    if ((ds_lon[iy1,ix2] - ds_lon[iy1,ix1]) > 0):
+        t = (lon - ds_lon[iy,ix1]) / (ds_lon[iy,ix2] - ds_lon[iy,ix1])
 
-
+    
     return s,t,ix1,ix2,iy1,iy2 
 
 
@@ -108,16 +105,14 @@ def Nearest_xy_point(ds, lat, lon):
 
     ds_lat = ds['latitude'].values
     ds_lon = ds['longitude'].values
-
+        
     #find distance between all the latitudes and longitudes in the dataset and the observation latitude
-    X1=np.sqrt(np.square(ds_lat-lat))
-    X2=np.sqrt(np.square(ds_lon-lon))
+    X=np.sqrt(np.square(ds_lat-lat) + np.square(ds_lon-lon))
+    idx=np.where(X == X.min())
 
-    idx1=np.where(X1 == X1.min())
-    idx2=np.where(X2 == X2.min())
-    ix=idx2[0] # longitude with smallest distance
-    iy=idx1[0] # latitude with smallest distance
-  
+    ix=idx[1] # longitude with smallest distance
+    iy=idx[0] # latitude with smallest distance
+
 
     return ix, iy 
 
@@ -152,7 +147,7 @@ def time_interpolate_points(ds, time1):
     if ((timepoints[it]-time1) > 0):
         t2=it
         t1=it-1
- 
+        
     t = 1
     if ((timepoints[t2] - timepoints[t1]) > 0):
         t = (time1 - timepoints[t1]) / (timepoints[t2] - timepoints[t1])
@@ -200,17 +195,17 @@ def exner_levs(ds, time1, ix, iy):
 
    
     ds = ds.isel(time=time1)
-    ds = ds.isel(latitude=iy, longitude=ix, latitude1=iy, longitude1=ix)
+    ds = ds.isel(y=iy, x=ix)
 
     #To find the presssure in the halflayer we need ap and bp which are constants representing the full layers
-  
-    ap = xarray.DataArray(ds["ap0"].values, dims=["kh"])
-    bp = xarray.DataArray(ds["b0"].values, dims=["kh"])
 
-    p_full = ap+bp*np.exp(ds["surface_air_pressure"].values.squeeze())
+    ap = xarray.DataArray(ds["ap"].values, dims=["kh"])
+    bp = xarray.DataArray(ds["b"].values, dims=["kh"])
+
+    p_full = ap+bp*ds["surface_air_pressure"]
     p_full=p_full.squeeze()
    
-    exner =  np.power(p_full/(math.exp(ds["surface_air_pressure"].values.squeeze())), 0.286)
+    exner =  np.power(p_full/(ds["surface_air_pressure"][0]), 0.286)
     
     return exner
 
@@ -236,7 +231,7 @@ def interpolate_exner(ds, exn_lev, exner, variable, time1, ix, iy):
 
     ds = ds.isel(time=time1)
 
-    var_list=ds[variable].isel(latitude1=iy, longitude1=ix).values
+    var_list=ds[variable].isel(y=iy, x=ix).values
     #var_list = np.append(var_list, ds[variable_ground].isel(y=iy,x=ix,height33=0).values[0]) 
 
     # Finds min distance
@@ -283,74 +278,57 @@ def interpolate_4dims(ds, sonde_object, variable):
 
     output
     -------------------------------------------------------------------------------
-    new_var: The exner(vertically) interpolated(not hosizontally) variables in a list
-    new_var_hor_int: The interpolated(also interpolated horizontally)
+    The interpolated variables in a list
 
     """
+
 
     new_var = []
   
     time_init=sonde_object.data["time"][0]
     ix, iy = Nearest_xy_point(ds, sonde_object.lat , sonde_object.lon)
 
-    v = BilinnerarPoints(ds, sonde_object.lat, sonde_object.lon)
 
-    data = ds.isel(time=0, latitude=iy, longitude=ix, latitude1=iy, longitude1=ix)
-
+    data = ds.isel(time=0, y=iy, x=ix)
     #Model exner levels
     exner = exner_levs(ds, 0, ix, iy).values
 
     exner=exner.squeeze()
-
     #sonde_exner levels
-    sonde_object.make_exner_levs(np.exp(data["surface_air_pressure"].values.squeeze()))
-        
+    sonde_object.make_exner_levs(data["surface_air_pressure"].values.squeeze())
+
     if len(sonde_object.data["exner"])<10:
         raise ValueError
 
     sonde_exner=sonde_object.data.loc[sonde_object.data["exner"]<exner[-1]]
     sonde_exner=sonde_exner.reset_index()
 
-    #vectors containing the height interpolated variables in the nearest xy grid points
-    h1=[]
-    h2=[]
-    h3=[]
-    h4=[]
-
-
     for row,t in enumerate(sonde_object.time[0:len(sonde_exner["exner"])]):
   
-        #time_inter = time_interpolate_points(ds, t)
-        time_inter = [1,0]
+        time_inter = time_interpolate_points(ds, t)
         
         exn_lev = sonde_exner["exner"][row]
 
         #Finding the height levels in both time points
-        #if time_inter[0]==1: #For now it wil allways go in this loop since there is no temporal interpolation
+        if time_inter[0]==1:
 
         
-        h1.append(interpolate_exner(ds, exn_lev, exner, variable, time_inter[1], v[2], v[4])[0])
-        h2.append(interpolate_exner(ds, exn_lev, exner, variable, time_inter[1], v[2], v[5])[0])
-        h3.append(interpolate_exner(ds, exn_lev, exner, variable, time_inter[1], v[3], v[4])[0])
-        h4.append(interpolate_exner(ds, exn_lev, exner, variable, time_inter[1], v[3], v[5])[0])
-
-            #new_var.append(h[0])
+            h = interpolate_exner(ds, exn_lev, exner, variable, time_inter[1], ix, iy)       
+            new_var.append(h[0])
      
-        #else:
+        else:
                
-        h = interpolate_exner(ds, exn_lev, exner, variable, time_inter[1], ix, iy)  
-            #h2 = interpolate_exner(ds, exn_lev, exner, variable, time_inter[2], ix, iy)
+            h1 = interpolate_exner(ds, exn_lev, exner, variable, time_inter[1], ix, iy)  
+            h2 = interpolate_exner(ds, exn_lev, exner, variable, time_inter[2], ix, iy)
               
     
             #interpolate in time
-            #new = h1+(h2-h1)*time_inter[0]
+            new = h1+(h2-h1)*time_inter[0]
           
-        new_var.append(h[0])
+            new_var.append(new[0])
 
-    new_var_hor_int = np.squeeze(Bilinnear_interpolate(v[0], v[1], h1, h2, h3, h4))
-
-    
-    return new_var, new_var_hor_int, sonde_exner["exner"]
+       
+    return new_var, sonde_exner["exner"]
 
 
 if __name__=="__main__":
@@ -360,12 +338,11 @@ if __name__=="__main__":
     i_sonde = task_id
 
     # loading the Chernobyl data from the Arome model
-    config = "/lustre/storeB/project/fou/kl/cerad/Meteorology/AROME-CHERNOBYL/cdmGribReaderConfigEC_Era5.xml"
+    config = "/lustre/storeB/project/fou/kl/cerad/Meteorology/AROME-CHERNOBYL/netcdf/cdmGribReaderConfigArome2_5.xml"
     
-    era5_file = f"/lustre/storeB/project/fou/kl/cerad/Meteorology/AROME-CHERNOBYL/ERA5/ma198605080012.mars"
+    arome_file = f"/lustre/storeB/project/fou/kl/cerad/Meteorology/AROME-CHERNOBYL/gribml/deter_19860507_12.grbml"
     
-    ds = xarray.open_dataset(era5_file, config=config, engine="fimex")#.isel(time=slice(12, -1))
-    #ds = xarray.open_dataset(arome_file).isel(time=slice(12, -1))
+    ds = xarray.open_dataset(arome_file, config=config, engine="fimex").isel(time=slice(12, -1))
 
     b = datetime64(f'1986-05-08T00:00:00.000000000')
 
@@ -377,40 +354,35 @@ if __name__=="__main__":
     
 
     file = sorted(os.listdir(f"/home/norah/master/Rs_data_bufr/1986050800"))[i_sonde]
-    #file = "65.55_22.13.csv"
-
     file_list=file.strip(".csv")
     file_list1=file_list.split("_")
 
     Radiosonde1 = Radiosonde_csv(f"/home/norah/master/Rs_data_bufr/1986050800/{file_list1[0]}_{file_list1[1]}.csv", b)
         
-    tx,tx_int, exner = interpolate_4dims(ds, Radiosonde1, "x_wind_ml")
-    ty,ty_int, exner = interpolate_4dims(ds, Radiosonde1, "y_wind_ml")
+    tx, exner = interpolate_4dims(ds, Radiosonde1, "x_wind_ml")
+    ty, exner = interpolate_4dims(ds, Radiosonde1, "y_wind_ml")
 
     x,y = Nearest_xy_point(ds, Radiosonde1.lat, Radiosonde1.lon)
  
     """
-    Find the interpolated wind direction. To also include horizontal interpolation switch to tx_int ant ty_int
-    ----------------------------------------------------------------------------------------------------------
+    Find the interpolated wind direction
+    ---------------------------------------------------------------------------------------------------------
     """
 
-    #wdir = (np.arctan2(ty, tx)*180.0/math.pi+180)%360
-    wdir = (90-np.arctan2(ty, tx)*180.0/math.pi+180)%360
+    if x[0]<792:
 
-    #if x[0]<279:
+        wdir = ds_alpha.isel(y=y[0], x=x[0]).values+90-np.arctan2(ty, tx)*180.0/math.pi+180
 
-        #wdir = ds_alpha.isel(y=y[0], x=x[0]).values+90-np.arctan2(ty, tx)*180.0/math.pi+180
+    else:
 
-    #else:
-
-        #wdir = -ds_alpha.isel(y=y[0], x=x[0]).values+90-np.arctan2(ty, tx)*180.0/math.pi+180
+        wdir = -ds_alpha.isel(y=y[0], x=x[0]).values+90-np.arctan2(ty, tx)*180.0/math.pi+180
 
 
     wdir_data = xarray.DataArray(wdir.squeeze(), dims=["exner"], coords={"exner":exner})
 
     wdir_data = xarray.Dataset({"wdir_model": wdir_data})
   
-    wdir_data.to_netcdf(f"/home/norah/master/data/trial_folder_era5/wdir/0800_wdir/{file_list1[0]}_{file_list1[1]}_wdir_model.nc")
+    wdir_data.to_netcdf(f"/home/norah/master/data/simple_int_arome/wdir/0800_wdir/{file_list1[0]}_{file_list1[1]}_wdir_model.nc")
 
 
     """
@@ -424,4 +396,4 @@ if __name__=="__main__":
 
     wspeed_data = xarray.Dataset({"wspeed_model": wspeed_data})
   
-    wspeed_data.to_netcdf(f"/home/norah/master/data/trial_folder_era5/wspeed/0800_wspeed/{file_list1[0]}_{file_list1[1]}_wspeed_model.nc")
+    wspeed_data.to_netcdf(f"/home/norah/master/data/simple_int_arome/wspeed/0800_wspeed/{file_list1[0]}_{file_list1[1]}_wspeed_model.nc")
