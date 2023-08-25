@@ -1,6 +1,6 @@
 # Comparing Model Results and Radiosonde Observations(for spatially dependent comparison)
 
-Interpolating wind direction and wind speed to be spatially comparable to radiosonde observations. To find other variables. the input to the interpolation function need to be changed in the main for both of the interpolation files. Aditionally some of the calculations, finding the wind speed and wind direction in the main can be commented for more simple variables like temperature. However, in the **interpolation_4d_height.py** file also the ground parameter need to be changed in the height_interpolate_point() function. To use the project on other models, the variable names need to be changed to match the model configuratio. Also alpha need to be changed to fit the configuration if the model if wind direction is found.
+Interpolating wind direction and wind speed to be spatially comparable to radiosonde observations. To find other variables, the input to the interpolation function need to be changed in the main for both of the interpolation files. Aditionally some of the calculations, finding the wind speed and wind direction in the main can be commented for more simple variables like temperature. However, in the **interpolation_4d_height.py** file also the ground parameter need to be changed in the height_interpolate_point() function. To use the project on other models, the variable names need to be changed to match the model configuration. Also alpha need to be changed to fit the configuration if the model if wind direction is found.
 
 ## Requirements
 
